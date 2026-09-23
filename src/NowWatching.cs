@@ -16,15 +16,15 @@ using Windows.Media.Control;
 [assembly: System.Reflection.AssemblyProduct("Now Watching Messenger")]
 [assembly: System.Reflection.AssemblyCompany("Lucas Issa")]
 [assembly: System.Reflection.AssemblyCopyright("Freeware - Lucas Issa")]
-[assembly: System.Reflection.AssemblyVersion("1.1.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.1.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.2.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.2.0.0")]
 
 namespace NowWatching
 {
     static class Program
     {
         public const string Name = "Now Watching Messenger";
-        public const string Version = "1.1";
+        public const string Version = "1.2";
 
         [DllImport("user32.dll")]
         static extern bool SetProcessDPIAware();
@@ -371,7 +371,13 @@ namespace NowWatching
                     }
                     finally { Release(playing); }
 
-                    if (mediaTitle != null)
+                    if (mediaTitle != null && found == Source.YouTube && MaskedMedia.IsPlaceholder(mediaTitle))
+                    {
+                        // Aba anonima/InPrivate: o navegador esconde o titulo ("Um site reproduzindo midia").
+                        // Usa o titulo da janela do navegador; se nao achar, nao mostra nada.
+                        title = MaskedMedia.YouTubeTitleFromWindows();
+                    }
+                    else if (mediaTitle != null)
                     {
                         title = mediaTitle;
                         artist = (found == Source.Spotify || Settings.ShowChannel) ? mediaArtist : null;

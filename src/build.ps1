@@ -11,9 +11,10 @@ Get-Process NowWatching, NowWatchingMessenger -ErrorAction SilentlyContinue | St
     "/win32icon:$src\icon.ico" `
     "/resource:$src\icon.ico,NowWatching.icon.ico" `
     "/resource:$src\about.png,NowWatching.about.png" `
+    "/resource:$src\media-placeholders.txt,NowWatching.media-placeholders.txt" `
     "/r:$fw\System.Runtime.dll" "/r:$fw\System.Runtime.InteropServices.WindowsRuntime.dll" `
     "/r:$wm\Windows.Foundation.winmd" "/r:$wm\Windows.Media.winmd" `
     /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll `
-    "$src\NowWatching.cs" "$src\Strings.cs" "$src\Forms.cs" "$src\Updater.cs"
+    "$src\NowWatching.cs" "$src\Strings.cs" "$src\Forms.cs" "$src\Updater.cs" "$src\MaskedMedia.cs"
 if ($LASTEXITCODE -ne 0) { throw "Falha na compilacao" }
 "OK: $out"

@@ -14,6 +14,7 @@ A modern rewrite of the classic *Now Watching* tray tool, which no longer runs o
 - Shows the YouTube video title (optionally with the channel name) or the Spotify track as *Artist - Song*
 - Works with Edge, Chrome, Firefox, Opera, Brave and Vivaldi, even when the YouTube tab is in the background
 - Enable or disable YouTube and Spotify independently
+- Also works in private windows (Edge InPrivate / incognito): the video title is read from the browser window, since the browser hides it from Windows media controls
 - Clears the status automatically when playback is paused or stopped
 - Re-sends the status if Messenger is restarted
 - Start with Windows option
@@ -53,6 +54,7 @@ The executable is created as `NowWatchingMessenger.exe` in the repository root.
 
 - Spotify Web Player (in the browser) is detected as a browser source, since Windows only reports which browser is playing, not which site
 - Only media that the browser or app exposes to Windows media controls is detected
+- In private windows, the YouTube tab must be the active tab of its window, and the channel name is not available
 
 ---
 
@@ -60,7 +62,7 @@ The executable is created as `NowWatchingMessenger.exe` in the repository root.
 
 Mostra o que você está assistindo no **YouTube** ou ouvindo no **Spotify** no status "O que estou ouvindo" do **Windows Live Messenger 2009**, no Windows 10 e 11.
 
-**Recursos:** título do vídeo (com ou sem o nome do canal), Spotify no formato *Artista - Música*, funciona no Edge, Chrome, Firefox e outros navegadores (até em abas de fundo), YouTube e Spotify ativados separadamente, iniciar com o Windows, atualização automática com um clique e interface em português, inglês, espanhol e russo.
+**Recursos:** título do vídeo (com ou sem o nome do canal), Spotify no formato *Artista - Música*, funciona no Edge, Chrome, Firefox e outros navegadores (até em abas de fundo e em janelas anônimas), YouTube e Spotify ativados separadamente, iniciar com o Windows, atualização automática com um clique e interface em português, inglês, espanhol e russo.
 
 **Como usar:** baixe o `NowWatchingMessenger.exe` em [Releases](../../releases), execute e, no Messenger, ative **"Mostrar o que estou ouvindo"** no menu da mensagem pessoal. Clique com o botão direito no ícone da bandeja para escolher as fontes, abrir as Preferências ou sair.
 
