@@ -1,6 +1,6 @@
 # Now Watching Messenger
 
-Show what you're watching on **YouTube** or listening to on **Spotify** in your **Windows Live Messenger 2009** "Now Playing" status — on Windows 10 and 11.
+Show what you're watching on **YouTube** or listening to on **Spotify** in your **Windows Live Messenger** "Now Playing" status — on Windows 10 and 11.
 
 A modern rewrite of the classic *Now Watching* tray tool, which no longer runs on current Windows.
 
