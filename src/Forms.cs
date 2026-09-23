@@ -1,8 +1,9 @@
-// Janela de Preferencias (inclui a area Sobre/Doar).
+// Janelas de Preferencias (inclui a area Sobre/Doar) e de aviso de atualizacao.
 
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace NowWatching
@@ -85,7 +86,14 @@ namespace NowWatching
 
             var about = Flow(FlowDirection.LeftToRight);
             about.Margin = new Padding(0, 14, 0, 14);
-            about.Controls.Add(new PictureBox { Image = Program.LoadAboutImage(), SizeMode = PictureBoxSizeMode.Zoom, Size = new Size(logo, logo), Margin = new Padding(0, 0, 14, 0) });
+            var pic = new PictureBox { Image = Program.LoadAboutImage(), SizeMode = PictureBoxSizeMode.Zoom, Size = new Size(logo, logo), Margin = new Padding(0, 0, 14, 0) };
+            about.Controls.Add(pic);
+            // PictureBox nao libera a imagem sozinho; libera imagem e icone ao fechar
+            FormClosed += (s, e) =>
+            {
+                var img = pic.Image; pic.Image = null; if (img != null) img.Dispose();
+                var ico = Icon; if (ico != null) ico.Dispose();
+            };
 
             var text = Flow(FlowDirection.TopDown);
             text.Controls.Add(new Label { Text = Program.Name + " " + Program.Version, AutoSize = true, Font = new Font("Segoe UI", 13f, FontStyle.Bold), ForeColor = Color.FromArgb(0, 84, 166), Margin = new Padding(0, 0, 0, 2) });
@@ -147,6 +155,68 @@ namespace NowWatching
             if (chkStartup.Checked != Settings.Startup) Settings.Startup = chkStartup.Checked;
             app.Changed();
             Close();
+        }
+    }
+
+    class UpdateForm : BaseForm
+    {
+        public UpdateForm(Updater.Release release, Action quit)
+        {
+            var t = Strings.Current;
+            Text = Program.Name + " - " + t.UpdateTitle;
+            TopMost = true;
+
+            var root = Flow(FlowDirection.TopDown);
+            var msg = new Label { Text = string.Format(t.UpdateText, release.Tag, Program.Version), AutoSize = true, Margin = new Padding(0, 0, 0, 16) };
+            msg.MaximumSize = new Size(msg.Font.Height * 22, 0);
+            root.MinimumSize = new Size(msg.Font.Height * 22, 0); // largura para o titulo nao cortar
+            root.Controls.Add(msg);
+
+            var buttons = Flow(FlowDirection.RightToLeft);
+            buttons.Anchor = AnchorStyles.Right;
+            buttons.Margin = new Padding(24, 0, 0, 0);
+            var btnCancel = MakeButton(t.Cancel);
+            var btnUpdate = MakeButton(t.UpdateButton);
+            buttons.Controls.Add(btnCancel);
+            buttons.Controls.Add(btnUpdate);
+            root.Controls.Add(buttons);
+
+            bool failed = false;
+            btnCancel.Click += (s, e) => Close();
+            btnUpdate.Click += (s, e) =>
+            {
+                if (failed)
+                {
+                    try { Process.Start(Updater.ReleasesPage); } catch { }
+                    Close();
+                    return;
+                }
+                btnUpdate.Enabled = btnCancel.Enabled = false;
+                msg.Text = t.Downloading;
+                ThreadPool.QueueUserWorkItem(_ =>
+                {
+                    try
+                    {
+                        Updater.Apply(release);
+                        BeginInvoke((Action)(() => { Close(); quit(); }));
+                    }
+                    catch
+                    {
+                        BeginInvoke((Action)(() =>
+                        {
+                            failed = true;
+                            msg.Text = t.UpdateFailed;
+                            btnUpdate.Text = t.OpenPage;
+                            btnUpdate.Enabled = btnCancel.Enabled = true;
+                        }));
+                    }
+                });
+            };
+
+            Controls.Add(root);
+            AcceptButton = btnUpdate;
+            CancelButton = btnCancel;
+            FormClosed += (s, e) => { var ico = Icon; if (ico != null) ico.Dispose(); };
         }
     }
 }

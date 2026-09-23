@@ -16,26 +16,40 @@ using Windows.Media.Control;
 [assembly: System.Reflection.AssemblyProduct("Now Watching Messenger")]
 [assembly: System.Reflection.AssemblyCompany("Lucas Issa")]
 [assembly: System.Reflection.AssemblyCopyright("Freeware - Lucas Issa")]
-[assembly: System.Reflection.AssemblyVersion("1.0.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.0.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.1.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.1.0.0")]
 
 namespace NowWatching
 {
     static class Program
     {
         public const string Name = "Now Watching Messenger";
-        public const string Version = "1.0";
+        public const string Version = "1.1";
 
         [DllImport("user32.dll")]
         static extern bool SetProcessDPIAware();
 
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
+            // Modo auxiliar: consulta o GitHub, escreve o resultado e sai (processo de vida curta)
+            if (Array.IndexOf(args, "--check-update") >= 0)
+            {
+                Updater.WriteCheckResult();
+                return;
+            }
+
             bool created;
             using (var mutex = new Mutex(true, "NowWatching_WLM_SingleInstance", out created))
             {
+                // Recem-atualizado: espera a versao antiga terminar de fechar
+                if (!created && Array.IndexOf(args, "--updated") >= 0)
+                {
+                    try { created = mutex.WaitOne(15000); }
+                    catch (AbandonedMutexException) { created = true; }
+                }
                 if (!created) return;
+                Updater.CleanupAsync();
                 // Se o exe foi renomeado/movido, atualiza o caminho do "Iniciar com o Windows"
                 try { if (Settings.Startup) Settings.Startup = true; } catch { }
                 SetProcessDPIAware();
@@ -236,6 +250,15 @@ namespace NowWatching
 
             ApplyTexts();
             timer = new System.Threading.Timer(_ => Poll(), null, 500, 2000);
+
+            // Uma unica verificacao de nova versao, 5 s apos abrir, em um processo auxiliar
+            // (assim o app principal nao carrega as bibliotecas de internet na memoria)
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                Thread.Sleep(5000);
+                var release = Updater.CheckInChildProcess();
+                if (release != null) ui.Post(__ => new UpdateForm(release, Quit).Show(), null);
+            });
         }
 
         // Chamado quando qualquer configuracao muda (menu ou preferencias)
@@ -270,42 +293,98 @@ namespace NowWatching
             return Source.None;
         }
 
+        // Ultima midia lida (titulo/artista so sao buscados de novo quando algo muda)
+        string mediaKey, mediaTitle, mediaArtist;
+        long mediaEnd;
+        double mediaPos;
+        DateTime mediaFetched = DateTime.MinValue;
+        static readonly TimeSpan MediaRefresh = TimeSpan.FromSeconds(30);
+
         void Poll()
         {
             if (Interlocked.Exchange(ref busy, 1) == 1) return;
             try
             {
-                string title = null, artist = null;
-                Source found = Source.None;
-
                 if (manager == null)
                     manager = Wait(GlobalSystemMediaTransportControlsSessionManager.RequestAsync());
 
-                foreach (var session in manager.GetSessions())
+                // Passo leve (a cada 2 s): acha a sessao tocando so pelo estado de reproducao
+                GlobalSystemMediaTransportControlsSession playing = null;
+                Source found = Source.None;
+                string appId = null;
+                var sessions = manager.GetSessions();
+                try
+                {
+                    int count = sessions.Count;
+                    for (int i = 0; i < count; i++)
+                    {
+                        var session = sessions[i];
+                        bool keep = false;
+                        try
+                        {
+                            string id = session.SourceAppUserModelId;
+                            var src = Classify(id);
+                            if (src == Source.None) continue;
+                            if (src == Source.YouTube && !Settings.YouTube) continue;
+                            if (src == Source.Spotify && !Settings.Spotify) continue;
+
+                            var info = session.GetPlaybackInfo();
+                            bool isPlaying = info != null && info.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
+                            Release(info);
+                            if (!isPlaying) continue;
+
+                            playing = session; found = src; appId = id; keep = true;
+                            break;
+                        }
+                        catch { }
+                        finally { if (!keep) Release(session); }
+                    }
+                }
+                finally { Release(sessions); }
+
+                string title = null, artist = null;
+                if (playing != null)
                 {
                     try
                     {
-                        var src = Classify(session.SourceAppUserModelId);
-                        if (src == Source.None) continue;
-                        if (src == Source.YouTube && !Settings.YouTube) continue;
-                        if (src == Source.Spotify && !Settings.Spotify) continue;
+                        // Detecta troca de faixa/video pela duracao ou por posicao voltando para tras
+                        long end = 0; double pos = 0;
+                        var tl = playing.GetTimelineProperties();
+                        if (tl != null) { end = tl.EndTime.Ticks; pos = tl.Position.TotalSeconds; }
+                        Release(tl);
 
-                        var info = session.GetPlaybackInfo();
-                        if (info == null || info.PlaybackStatus != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing) continue;
-                        var props = Wait(session.TryGetMediaPropertiesAsync());
-                        if (props == null || string.IsNullOrWhiteSpace(props.Title)) continue;
+                        bool changed = appId != mediaKey || end != mediaEnd || pos + 3 < mediaPos
+                            || DateTime.UtcNow - mediaFetched > MediaRefresh || mediaTitle == null;
+                        mediaPos = pos;
 
-                        title = props.Title;
-                        artist = (src == Source.Spotify || Settings.ShowChannel) ? props.Artist : null;
+                        if (changed)
+                        {
+                            // Passo pesado: so quando algo mudou (ou a cada 30 s como garantia)
+                            var op = playing.TryGetMediaPropertiesAsync();
+                            var props = Wait(op);
+                            Release(op);
+                            mediaTitle = props == null || string.IsNullOrWhiteSpace(props.Title) ? null : props.Title;
+                            mediaArtist = props == null ? null : props.Artist;
+                            Release(props);
+                            mediaKey = appId; mediaEnd = end; mediaFetched = DateTime.UtcNow;
+                        }
+                    }
+                    finally { Release(playing); }
+
+                    if (mediaTitle != null)
+                    {
+                        title = mediaTitle;
+                        artist = (found == Source.Spotify || Settings.ShowChannel) ? mediaArtist : null;
                         // Spotify: "Artista - Musica"; YouTube mantem "Titulo - Canal"
-                        if (src == Source.Spotify && !string.IsNullOrWhiteSpace(artist))
+                        if (found == Source.Spotify && !string.IsNullOrWhiteSpace(artist))
                         {
                             string t = title; title = artist; artist = t;
                         }
-                        found = src;
-                        break;
                     }
-                    catch { }
+                }
+                else
+                {
+                    mediaKey = mediaTitle = mediaArtist = null;
                 }
 
                 string shownTitle = Settings.Enabled ? title : null;
@@ -323,13 +402,21 @@ namespace NowWatching
                 string text = title == null ? null
                     : (found == Source.Spotify ? "Spotify: " : "YouTube: ")
                       + (string.IsNullOrEmpty(artist) ? title : title + " - " + artist);
-                ui.Post(_ => UpdateLabel(text), null);
+                if (text != label) ui.Post(_ => UpdateLabel(text), null);
             }
             catch
             {
+                Release(manager);
                 manager = null; // tenta de novo no proximo ciclo
+                mediaKey = mediaTitle = mediaArtist = null;
             }
             finally { Interlocked.Exchange(ref busy, 0); }
+        }
+
+        // Libera o objeto do Windows na hora, em vez de esperar o coletor de lixo do .NET
+        static void Release(object o)
+        {
+            try { if (o != null && Marshal.IsComObject(o)) Marshal.ReleaseComObject(o); } catch { }
         }
 
         // Espera uma operacao WinRT sem depender de System.Runtime.WindowsRuntime (AsTask)
@@ -344,7 +431,6 @@ namespace NowWatching
             if (op.Status != AsyncStatus.Completed) throw new InvalidOperationException("WinRT: " + op.Status);
             return op.GetResults();
         }
-
         void UpdateLabel(string text)
         {
             label = text;
@@ -359,6 +445,7 @@ namespace NowWatching
             if (prefsForm == null || prefsForm.IsDisposed)
             {
                 prefsForm = new PreferencesForm(this);
+                prefsForm.FormClosed += (s, e) => prefsForm = null;
                 prefsForm.Show();
             }
             prefsForm.Activate();

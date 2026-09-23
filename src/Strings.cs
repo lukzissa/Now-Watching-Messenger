@@ -9,7 +9,8 @@ namespace NowWatching
     {
         public string LanguageName, NothingPlaying, ShowInMessenger, Sources, YouTube, Spotify,
             PreferencesMenu, Exit, PreferencesTitle, Language, ShowChannel, Startup,
-            Ok, Cancel, Freeware, DonateHint, DonateButton;
+            Ok, Cancel, Freeware, DonateHint, DonateButton,
+            UpdateTitle, UpdateText, UpdateButton, Downloading, UpdateFailed, OpenPage;
 
         public static readonly string[] Codes = { "pt-BR", "es", "en", "ru" };
 
@@ -32,7 +33,13 @@ namespace NowWatching
                 Cancel = "Cancelar",
                 Freeware = "Freeware desenvolvido por Lucas Issa.",
                 DonateHint = "Se o app foi útil para você, considere apoiar com uma doação.",
-                DonateButton = "Doar com PayPal" } },
+                DonateButton = "Doar com PayPal",
+                UpdateTitle = "Atualização disponível",
+                UpdateText = "Uma nova versão está disponível: {0}\nVersão atual: {1}\n\nDeseja atualizar agora?",
+                UpdateButton = "Atualizar",
+                Downloading = "Baixando atualização...",
+                UpdateFailed = "Não foi possível atualizar automaticamente.\nBaixe a nova versão pela página do GitHub.",
+                OpenPage = "Abrir página" } },
             { "es", new Strings {
                 LanguageName = "Español",
                 NothingPlaying = "Nada en reproducción",
@@ -50,7 +57,13 @@ namespace NowWatching
                 Cancel = "Cancelar",
                 Freeware = "Freeware desarrollado por Lucas Issa.",
                 DonateHint = "Si la aplicación te resultó útil, considera apoyarla con una donación.",
-                DonateButton = "Donar con PayPal" } },
+                DonateButton = "Donar con PayPal",
+                UpdateTitle = "Actualización disponible",
+                UpdateText = "Hay una nueva versión disponible: {0}\nVersión actual: {1}\n\n¿Deseas actualizar ahora?",
+                UpdateButton = "Actualizar",
+                Downloading = "Descargando actualización...",
+                UpdateFailed = "No se pudo actualizar automáticamente.\nDescarga la nueva versión desde la página de GitHub.",
+                OpenPage = "Abrir página" } },
             { "en", new Strings {
                 LanguageName = "English",
                 NothingPlaying = "Nothing playing",
@@ -68,7 +81,13 @@ namespace NowWatching
                 Cancel = "Cancel",
                 Freeware = "Freeware developed by Lucas Issa.",
                 DonateHint = "If this app is useful to you, please consider supporting it with a donation.",
-                DonateButton = "Donate with PayPal" } },
+                DonateButton = "Donate with PayPal",
+                UpdateTitle = "Update available",
+                UpdateText = "A new version is available: {0}\nCurrent version: {1}\n\nDo you want to update now?",
+                UpdateButton = "Update",
+                Downloading = "Downloading update...",
+                UpdateFailed = "Could not update automatically.\nPlease download the new version from the GitHub page.",
+                OpenPage = "Open page" } },
             { "ru", new Strings {
                 LanguageName = "Русский",
                 NothingPlaying = "Ничего не воспроизводится",
@@ -86,7 +105,13 @@ namespace NowWatching
                 Cancel = "Отмена",
                 Freeware = "Бесплатная программа, разработанная Lucas Issa.",
                 DonateHint = "Если программа оказалась полезной, поддержите её пожертвованием.",
-                DonateButton = "Пожертвовать через PayPal" } },
+                DonateButton = "Пожертвовать через PayPal",
+                UpdateTitle = "Доступно обновление",
+                UpdateText = "Доступна новая версия: {0}\nТекущая версия: {1}\n\nОбновить сейчас?",
+                UpdateButton = "Обновить",
+                Downloading = "Загрузка обновления...",
+                UpdateFailed = "Не удалось обновить автоматически.\nСкачайте новую версию со страницы GitHub.",
+                OpenPage = "Открыть страницу" } },
         };
 
         public static Strings Get(string code)
