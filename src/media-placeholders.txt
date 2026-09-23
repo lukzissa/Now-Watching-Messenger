@@ -1,10 +1,14 @@
+'n Werf speel tans media
 A site is playing media
+Az egyik webhely médiatartalmat játszik le
 Bir site medya oynatıyor
 Een site speelt media af
+Eine Website gibt Medien wieder
 Eit nettstad speler av media
 En webbplats spelar upp media
 Eng Websäit spillt Medien of
 Et nettsted spiller av medier
+Et website afspiller medier
 Et websted afspiller medier
 Gune bat multimedia erreproduzitzen ari da
 Hi ha un lloc reproduint multimèdia
@@ -14,68 +18,123 @@ Laman sedang memainkan media
 Lokalita prehráva médiá
 Mae safle yn chwarae cyfryngau
 May site na nagpe-play ng media
+Media spelas upp på en webbplats
 Médiatartalmat lejátszó webhely
 Một trang web đang phát nội dung đa phương tiện
+Một trang web đang phát nội dung đa phương tiện
 Na webu se přehrávají média
+Një sajt po luan media
 Një sajt është duke lexuar media
+Sait esitab meediasisu
 Sait esitab meediumisisu
+Sajt pušta medijski sadržaj
 Sayt media ifa edir
+Sayt media oxudur
+Saytda media-fayl ijro etilmoqda
+Sebuah situs sedang memutar media
 Sit qed jaqra l-midja
 Situs sedang memutar media
+Sivusto toistaa mediaa
 Sivusto toistaa mediasisältöä
 Spletno mesto predvaja medije
+Spletno mesto predvaja predstavnost
+Strona odtwarza multimedia
 Svetainėje leidžiama medija
 Svæði er að spila margmiðlunarefni
+Tapak sedang memainkan media
 Tha làrach a’ cluich meadhan
+Tovuti inacheza maudhui
 Tá meáin á seinm ag suíomh
 Um site está a reproduzir conteúdo multimédia
+Um site está a reproduzir multimédia.
+Um site está com mídia aberta
 Um site reproduzindo mídia
 Un lloc està reproduint contingut multimèdia
+Un lloc web està reproduint contingut multimèdia
+Un site est en train de lire un contenu multimédia
 Un site lit actuellement un contenu multimédia
 Un site redă conținut media
+Un site redă fișiere media
 Un sitio está a reproducir contido multimedia
+Un sitio está reproduciendo contenido multimedia
 Un sitio está reproduciendo elementos multimedia
+Un sitio web está reproduciendo elementos multimedia
+Un sito sta riproducendo contenuti multimediali
 Un sito sta riproducendo file multimediali
 Veb sajt reprodukuje medijski sadržaj
+Vietne atskaņo multivides saturu
 Vietnē tiek atskaņots multivides saturs
 W witrynie są odtwarzane multimedia
+Web lokacija reproducira medij
 Web lokacija reproducira medije
+Web prehráva médiá
+Web přehrává média
+Web-lokacija reproducira medije
 Web-mjesto reproducira medijski sadržaj
 Website gibt Medien wieder
+Ένας ιστότοπος κάνει αναπαραγωγή μέσων
 Μια τοποθεσία αναπαράγει πολυμέσα
 Веб сајт репродукује медијски садржај
 На сайте воспроизводится файл мультимедиа
+На сайте воспроизводятся медиафайлы
 Некоја локација пушта медиуми
+Сайт възпроизвежда мултимедийно съдържание
 Сайт възпроизвежда мултимедия
+Сайт відтворює медіа-вміст
 Сайт відтворює медіавміст
+Сайт медиа тоглуулж байна
+Сайтта мультимедиа ойнатылуда
 Сайтта мультимедиа файлы ойнатылуда
+Сајт пушта медијски садржај
 Сајт репродукује медије
+Сајтот репродуцира аудиовизуелни содржини
 Төен медиафайлны уйната
+אתר מסוים מפעיל מדיה
 אתר מפעיל מדיה
 ایک سائٹ میڈیا چلا رہی ہے
 بىر بېكەت مېدىيا قويۇۋاتىدۇ
+تفعيل موقع إلكتروني للوسائط
+سائٹ پر میڈیا چل رہا ہے
 سایتی در حال پخش فایل رسانه‌ای است
+سایتی درحال پخش رسانه است
 يقوم أحد المواقع بتشغيل الوسائط
 एउटा साइटले मिडिया प्ले गरिरहेको छ
 एक साइट मीडिया चला रही है
+किसी साइट पर मीडिया चल रहा है
 साइट मीडिया प्ले करत आहे
 सायट मिडिया चालू करता
 একটি সাইট মিডিয়া প্লে করছে
+একটি সাইট মিডিয়া চালাচ্ছে
 এটা ছাইটে মিডিয়া প্লে’ কৰি আছে
 ਕੋਈ ਸਾਈਟ ਮੀਡੀਆ ਚਲਾ ਰਹੀ ਹੈ
 એક સાઇટ મીડિયા ચલાવી રહી છે
+સાઇટ મીડિયા ચલાવી રહી છે
 ଏକ ସାଇଟ୍ ମିଡିଆ ଚାଳନ କରୁଛି
 ஒரு தளம் மீடியாவை இயக்குகிறது
 ఒక సైట్ మీడియాను ప్లే చేస్తోంది
+ఒక సైట్‌లో మీడియా ప్లే చేయబడుతోంది
+ಒಂದು ಸೈಟ್, ಮಾಧ್ಯಮವನ್ನು ಪ್ಲೇ ಮಾಡುತ್ತಿದೆ
 ಸೈಟ್ ಒಂದು ಪ್ಲೇಮಾಡುವ ಮಾಧ್ಯಮವಾಗಿದೆ
 ഒരു സൈറ്റ് മീഡിയ പ്ലേചെയ്യുന്നു
+സൈറ്റ്, മീഡിയ പ്ലേ ചെയ്യുന്നു
+වෙබ් අඩවියක් මාධ්‍ය ධාවන කරයි
+เว็บไซต์กำลังเล่นสื่อ
 ไซต์กําลังเล่นสื่อ
+ເວັບໄຊກຳລັງຫຼິ້ນສື່ຢູ່
 ເວັບໄຊທ໌ກຳລັງຫຼິ້ນມີເດຍ
+ဝဘ်ဆိုက်တစ်ခုက မီဒီယာကို ဖွင့်နေသည်
 ვებსაიტი უკრავს მედიას
+საიტზე გაშვებულია მედია-კონტენტი
+አንድ ጣቢያ ሚዲያን በማጫወት ላይ ነው
 የሆነ ጣቢያ ሚዲያ እየተጫወተ ነው
 គេហទំព័រមួយកំពុងចាក់មេឌៀ
+គេហទំព័រ​កំពុង​ចាក់មេឌៀ
 ’n Werf speel tans media
 サイトではメディアを再生しています
+サイトでメディアが再生されています
 一个网站正在播放媒体
+一個網站正在播放媒體內容
+某个网站正在播放媒体内容
 網站現正播放媒體
+사이트에서 미디어 재생 중
 사이트에서 미디어를 재생 중입니다.

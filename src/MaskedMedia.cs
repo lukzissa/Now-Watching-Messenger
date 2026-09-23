@@ -26,6 +26,9 @@ namespace NowWatching
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         static extern int GetClassName(IntPtr hWnd, StringBuilder name, int max);
 
+        [DllImport("user32.dll")]
+        static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
+
         // Textos genericos do Edge em todos os idiomas (extraidos dos arquivos de idioma do navegador)
         static HashSet<string> placeholders;
 
@@ -48,8 +51,8 @@ namespace NowWatching
 
         static readonly Regex NotificationCount = new Regex(@"^\(\d+\+?\)\s*");
 
-        // Procura uma janela de navegador cuja aba ativa seja um video do YouTube ("Titulo - YouTube ...")
-        public static string YouTubeTitleFromWindows()
+        // Procura uma janela do navegador (processName) cuja aba ativa seja um video do YouTube ("Titulo - YouTube ...")
+        public static string YouTubeTitleFromWindows(string processName)
         {
             string found = null;
             var text = new StringBuilder(1024);
@@ -67,6 +70,7 @@ namespace NowWatching
                 string t = text.ToString();
                 int i = t.IndexOf(" - YouTube", StringComparison.Ordinal);
                 if (i <= 0) return true;
+                if (!BelongsTo(h, processName)) return true; // ignora YouTube aberto em outro navegador
 
                 found = NotificationCount.Replace(t.Substring(0, i), "").Trim();
                 return found.Length == 0; // continua procurando se o titulo ficou vazio
@@ -74,6 +78,19 @@ namespace NowWatching
             EnumWindows(callback, IntPtr.Zero);
             GC.KeepAlive(callback);
             return string.IsNullOrEmpty(found) ? null : found;
+        }
+
+        static bool BelongsTo(IntPtr hWnd, string processName)
+        {
+            if (string.IsNullOrEmpty(processName)) return true;
+            try
+            {
+                uint pid;
+                GetWindowThreadProcessId(hWnd, out pid);
+                using (var p = System.Diagnostics.Process.GetProcessById((int)pid))
+                    return string.Equals(p.ProcessName, processName, StringComparison.OrdinalIgnoreCase);
+            }
+            catch { return false; }
         }
     }
 }

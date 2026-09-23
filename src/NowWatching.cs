@@ -16,15 +16,15 @@ using Windows.Media.Control;
 [assembly: System.Reflection.AssemblyProduct("Now Watching Messenger")]
 [assembly: System.Reflection.AssemblyCompany("Lucas Issa")]
 [assembly: System.Reflection.AssemblyCopyright("Freeware - Lucas Issa")]
-[assembly: System.Reflection.AssemblyVersion("1.2.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.2.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.3.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.3.0.0")]
 
 namespace NowWatching
 {
     static class Program
     {
         public const string Name = "Now Watching Messenger";
-        public const string Version = "1.2";
+        public const string Version = "1.3";
 
         [DllImport("user32.dll")]
         static extern bool SetProcessDPIAware();
@@ -36,6 +36,14 @@ namespace NowWatching
             if (Array.IndexOf(args, "--check-update") >= 0)
             {
                 Updater.WriteCheckResult();
+                return;
+            }
+
+            // Modo auxiliar: le as abas do navegador pela acessibilidade do Windows e sai
+            int readTabs = Array.IndexOf(args, "--read-tabs");
+            if (readTabs >= 0)
+            {
+                TabReader.Run(readTabs + 1 < args.Length ? args[readTabs + 1] : null);
                 return;
             }
 
@@ -300,6 +308,25 @@ namespace NowWatching
         DateTime mediaFetched = DateTime.MinValue;
         static readonly TimeSpan MediaRefresh = TimeSpan.FromSeconds(30);
 
+        // Titulo lido das abas (janela anonima com a aba do YouTube em segundo plano)
+        string tabKey, tabTitle;
+        DateTime tabFetched = DateTime.MinValue, tabStarted = DateTime.MinValue;
+        bool tabRetry;
+
+        // Nome do processo do navegador a partir do id da sessao de midia
+        static string BrowserProcess(string appId)
+        {
+            appId = (appId ?? "").ToLowerInvariant();
+            if (appId.Contains("msedge")) return "msedge";
+            if (appId.Contains("firefox") || appId.Contains("308046b0af4a39cb")) return "firefox";
+            if (appId.Contains("brave")) return "brave";
+            if (appId.Contains("opera")) return "opera";
+            if (appId.Contains("vivaldi")) return "vivaldi";
+            if (appId.Contains("yandex")) return "browser";
+            if (appId.Contains("chrome")) return "chrome";
+            return null;
+        }
+
         void Poll()
         {
             if (Interlocked.Exchange(ref busy, 1) == 1) return;
@@ -343,6 +370,7 @@ namespace NowWatching
                 finally { Release(sessions); }
 
                 string title = null, artist = null;
+                bool changed = false;
                 if (playing != null)
                 {
                     try
@@ -353,7 +381,7 @@ namespace NowWatching
                         if (tl != null) { end = tl.EndTime.Ticks; pos = tl.Position.TotalSeconds; }
                         Release(tl);
 
-                        bool changed = appId != mediaKey || end != mediaEnd || pos + 3 < mediaPos
+                        changed = appId != mediaKey || end != mediaEnd || pos + 3 < mediaPos
                             || DateTime.UtcNow - mediaFetched > MediaRefresh || mediaTitle == null;
                         mediaPos = pos;
 
@@ -371,11 +399,31 @@ namespace NowWatching
                     }
                     finally { Release(playing); }
 
-                    if (mediaTitle != null && found == Source.YouTube && MaskedMedia.IsPlaceholder(mediaTitle))
+                    bool placeholder = mediaTitle != null && MaskedMedia.IsPlaceholder(mediaTitle);
+                    if (mediaTitle != null && found == Source.YouTube && (placeholder || string.IsNullOrWhiteSpace(mediaArtist)))
                     {
-                        // Aba anonima/InPrivate: o navegador esconde o titulo ("Um site reproduzindo midia").
-                        // Usa o titulo da janela do navegador; se nao achar, nao mostra nada.
-                        title = MaskedMedia.YouTubeTitleFromWindows();
+                        // Aba anonima/privativa: o navegador esconde o titulo ("Um site reproduzindo midia")
+                        // e nunca informa artista. Video normal do YouTube sempre traz o canal como artista,
+                        // entao "sem artista" indica midia escondida, em qualquer idioma.
+                        // Se nao achar a aba do YouTube, nao mostra nada: assim nenhum texto generico ("Firefox is
+                        // playing media" etc.) chega ao Messenger, em qualquer navegador e idioma, mesmo fora da lista.
+                        // Le as abas pela acessibilidade (processo auxiliar) e usa a aba do YouTube que toca audio,
+                        // ativa ou em segundo plano. So roda quando a midia muda (ou a cada 30 s), para nao pesar.
+                        string proc = BrowserProcess(appId);
+                        if (changed || tabKey != appId || tabRetry || DateTime.UtcNow - tabFetched > MediaRefresh)
+                        {
+                            if (tabKey != appId) tabStarted = DateTime.UtcNow;
+                            string read = TabReader.ReadInChildProcess(proc);
+                            // Leitura incerta (aba recem-aberta): tenta de novo no proximo ciclo, por ate 20 s
+                            tabRetry = read == TabReader.Retry && DateTime.UtcNow - tabStarted < TimeSpan.FromSeconds(20);
+                            if (read == TabReader.NoTabs)
+                                tabTitle = MaskedMedia.YouTubeTitleFromWindows(proc); // navegador sem abas acessiveis
+                            else if (read != TabReader.Retry)
+                                tabTitle = read;
+                            tabKey = appId;
+                            tabFetched = DateTime.UtcNow;
+                        }
+                        title = tabTitle;
                     }
                     else if (mediaTitle != null)
                     {
@@ -391,6 +439,7 @@ namespace NowWatching
                 else
                 {
                     mediaKey = mediaTitle = mediaArtist = null;
+                    tabKey = tabTitle = null;
                 }
 
                 string shownTitle = Settings.Enabled ? title : null;
