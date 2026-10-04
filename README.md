@@ -13,6 +13,7 @@ A modern rewrite of the classic *Now Watching* tray tool, which no longer runs o
 
 - Shows the YouTube video title (optionally with the channel name) or the Spotify track as *Artist - Song*
 - Works with Edge, Chrome, Firefox, Opera, Brave and Vivaldi, even when the YouTube tab is in the background
+- Privacy: in the browser only YouTube and Spotify Web Player are shown; media from any other site is ignored
 - Enable or disable YouTube and Spotify independently
 - Also works in private windows in any browser (Edge InPrivate, Chrome/Brave incognito, Firefox private browsing), even with the YouTube tab in the background: since the browser hides the title from Windows media controls, it is read from the browser tabs through Windows accessibility (UI Automation), in a short-lived helper process
 - Clears the status automatically when playback is paused or stopped
@@ -52,7 +53,7 @@ The executable is created as `NowWatchingMessenger.exe` in the repository root.
 
 ## Known limitations
 
-- Spotify Web Player (in the browser) is detected as a browser source, since Windows only reports which browser is playing, not which site
+- In the browser only YouTube and Spotify Web Player are recognized; other sites are ignored. Spotify Web Player in private windows is not shown
 - Only media that the browser or app exposes to Windows media controls is detected
 - In private windows the channel name is not available, and if more than one YouTube tab is playing at the same time nothing is shown
 
@@ -62,7 +63,7 @@ The executable is created as `NowWatchingMessenger.exe` in the repository root.
 
 Mostra o que você está assistindo no **YouTube** ou ouvindo no **Spotify** no status "O que estou ouvindo" do **Windows Live Messenger 2009**, no Windows 10 e 11.
 
-**Recursos:** título do vídeo (com ou sem o nome do canal), Spotify no formato *Artista - Música*, funciona no Edge, Chrome, Firefox e outros navegadores (até em abas de fundo, inclusive em janelas anônimas), YouTube e Spotify ativados separadamente, iniciar com o Windows, atualização automática com um clique e interface em português, inglês, espanhol e russo.
+**Recursos:** título do vídeo (com ou sem o nome do canal), Spotify no formato *Artista - Música*, funciona no Edge, Chrome, Firefox e outros navegadores (até em abas de fundo, inclusive em janelas anônimas), YouTube e Spotify ativados separadamente, privacidade (no navegador só o YouTube e o Spotify Web aparecem; outros sites são ignorados), iniciar com o Windows, atualização automática com um clique e interface em português, inglês, espanhol e russo.
 
 **Como usar:** baixe o `NowWatchingMessenger.exe` em [Releases](../../releases), execute e, no Messenger, ative **"Mostrar o que estou ouvindo"** no menu da mensagem pessoal. Clique com o botão direito no ícone da bandeja para escolher as fontes, abrir as Preferências ou sair.
 

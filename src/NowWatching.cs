@@ -16,15 +16,15 @@ using Windows.Media.Control;
 [assembly: System.Reflection.AssemblyProduct("Now Watching Messenger")]
 [assembly: System.Reflection.AssemblyCompany("Lucas Issa")]
 [assembly: System.Reflection.AssemblyCopyright("Freeware - Lucas Issa")]
-[assembly: System.Reflection.AssemblyVersion("1.3.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.3.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.4.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.4.0.0")]
 
 namespace NowWatching
 {
     static class Program
     {
         public const string Name = "Now Watching Messenger";
-        public const string Version = "1.3";
+        public const string Version = "1.4";
 
         [DllImport("user32.dll")]
         static extern bool SetProcessDPIAware();
@@ -43,7 +43,7 @@ namespace NowWatching
             int readTabs = Array.IndexOf(args, "--read-tabs");
             if (readTabs >= 0)
             {
-                TabReader.Run(readTabs + 1 < args.Length ? args[readTabs + 1] : null);
+                TabReader.Run(readTabs + 1 < args.Length ? args[readTabs + 1] : null, Array.IndexOf(args, "--list") >= 0);
                 return;
             }
 
@@ -313,6 +313,41 @@ namespace NowWatching
         DateTime tabFetched = DateTime.MinValue, tabStarted = DateTime.MinValue;
         bool tabRetry;
 
+        // Privacidade: no navegador so o YouTube e o Spotify Web contam. Resultado da ultima confirmacao (navegador + titulo)
+        enum Site { Other, YouTube, SpotifyWeb }
+        string siteKey;
+        Site siteResult;
+        DateTime siteChecked = DateTime.MinValue;
+        // Sessao de outro site (navegador + duracao) que o ciclo deve pular, para mostrar outra midia (ex.: Spotify)
+        string skipSession;
+        DateTime skipUntil = DateTime.MinValue;
+
+        // Descobre de que site e a midia do navegador (o Windows nao informa o site):
+        // - YouTube: aba "<mesmo titulo> - YouTube"; Spotify Web: aba "<titulo> • <artista>" tocando
+        // Primeiro pelo titulo das janelas (rapido); se a aba estiver em segundo plano, pelas abas (processo auxiliar).
+        // Resultado guardado; outros sites sao conferidos de novo a cada 30 s.
+        Site CheckSite(string appId, string title)
+        {
+            string key = appId + "|" + title;
+            if (key == siteKey && (siteResult != Site.Other || DateTime.UtcNow - siteChecked < MediaRefresh)) return siteResult;
+            string proc = BrowserProcess(appId);
+            Site site = MaskedMedia.YouTubeWindowHas(proc, title) ? Site.YouTube
+                : MaskedMedia.SpotifyWebWindowHas(proc, title) ? Site.SpotifyWeb : Site.Other;
+            if (site == Site.Other)
+            {
+                string list = TabReader.ReadInChildProcess(proc, true);
+                if (list == TabReader.Retry) return Site.Other; // aba recem-aberta: confere de novo no proximo ciclo
+                if (list != null && list != TabReader.NoTabs)
+                    foreach (var line in list.Split('\n'))
+                    {
+                        if (line.StartsWith("~")) { if (MaskedMedia.IsSpotifyWebName(line, title)) { site = Site.SpotifyWeb; break; } }
+                        else if (MaskedMedia.SameTitle(line, title)) { site = Site.YouTube; break; }
+                    }
+            }
+            siteKey = key; siteResult = site; siteChecked = DateTime.UtcNow;
+            return site;
+        }
+
         // Nome do processo do navegador a partir do id da sessao de midia
         static string BrowserProcess(string appId)
         {
@@ -325,6 +360,29 @@ namespace NowWatching
             if (appId.Contains("yandex")) return "browser";
             if (appId.Contains("chrome")) return "chrome";
             return null;
+        }
+
+        // Aba anonima/privativa: o navegador esconde o titulo ("Um site reproduzindo midia") e nunca informa artista.
+        // Video normal do YouTube sempre traz o canal como artista, entao "sem artista" indica midia escondida.
+        // Le as abas pela acessibilidade (processo auxiliar) e usa a aba do YouTube que toca audio, ativa ou em
+        // segundo plano; se nao achar, nao mostra nada (nenhum texto generico chega ao Messenger). So roda quando
+        // a midia muda (ou a cada 30 s), para nao pesar.
+        string MaskedTitle(string appId, bool changed)
+        {
+            string proc = BrowserProcess(appId);
+            if (changed || tabKey != appId || tabRetry || DateTime.UtcNow - tabFetched > MediaRefresh)
+            {
+                if (tabKey != appId) tabStarted = DateTime.UtcNow;
+                string read = TabReader.ReadInChildProcess(proc);
+                tabRetry = read == TabReader.Retry && DateTime.UtcNow - tabStarted < TimeSpan.FromSeconds(20);
+                if (read == TabReader.NoTabs)
+                    tabTitle = MaskedMedia.YouTubeTitleFromWindows(proc); // navegador sem abas acessiveis
+                else if (read != TabReader.Retry)
+                    tabTitle = read;
+                tabKey = appId;
+                tabFetched = DateTime.UtcNow;
+            }
+            return tabTitle;
         }
 
         void Poll()
@@ -352,13 +410,22 @@ namespace NowWatching
                             string id = session.SourceAppUserModelId;
                             var src = Classify(id);
                             if (src == Source.None) continue;
-                            if (src == Source.YouTube && !Settings.YouTube) continue;
+                            if (src == Source.YouTube && !Settings.YouTube && !Settings.Spotify) continue; // navegador: YouTube ou Spotify Web
                             if (src == Source.Spotify && !Settings.Spotify) continue;
 
                             var info = session.GetPlaybackInfo();
                             bool isPlaying = info != null && info.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
                             Release(info);
                             if (!isPlaying) continue;
+
+                            // Pula a midia de outro site (nao YouTube) que ja foi conferida, para achar outra midia
+                            if (src == Source.YouTube && skipSession != null && DateTime.UtcNow < skipUntil && skipSession.StartsWith(id + "|", StringComparison.Ordinal))
+                            {
+                                var stl = session.GetTimelineProperties();
+                                long sEnd = stl == null ? 0 : stl.EndTime.Ticks;
+                                Release(stl);
+                                if (skipSession == id + "|" + sEnd) continue;
+                            }
 
                             playing = session; found = src; appId = id; keep = true;
                             break;
@@ -400,33 +467,25 @@ namespace NowWatching
                     finally { Release(playing); }
 
                     bool placeholder = mediaTitle != null && MaskedMedia.IsPlaceholder(mediaTitle);
+                    Site site = Site.Other;
                     if (mediaTitle != null && found == Source.YouTube && (placeholder || string.IsNullOrWhiteSpace(mediaArtist)))
                     {
-                        // Aba anonima/privativa: o navegador esconde o titulo ("Um site reproduzindo midia")
-                        // e nunca informa artista. Video normal do YouTube sempre traz o canal como artista,
-                        // entao "sem artista" indica midia escondida, em qualquer idioma.
-                        // Se nao achar a aba do YouTube, nao mostra nada: assim nenhum texto generico ("Firefox is
-                        // playing media" etc.) chega ao Messenger, em qualquer navegador e idioma, mesmo fora da lista.
-                        // Le as abas pela acessibilidade (processo auxiliar) e usa a aba do YouTube que toca audio,
-                        // ativa ou em segundo plano. So roda quando a midia muda (ou a cada 30 s), para nao pesar.
-                        string proc = BrowserProcess(appId);
-                        if (changed || tabKey != appId || tabRetry || DateTime.UtcNow - tabFetched > MediaRefresh)
-                        {
-                            if (tabKey != appId) tabStarted = DateTime.UtcNow;
-                            string read = TabReader.ReadInChildProcess(proc);
-                            // Leitura incerta (aba recem-aberta): tenta de novo no proximo ciclo, por ate 20 s
-                            tabRetry = read == TabReader.Retry && DateTime.UtcNow - tabStarted < TimeSpan.FromSeconds(20);
-                            if (read == TabReader.NoTabs)
-                                tabTitle = MaskedMedia.YouTubeTitleFromWindows(proc); // navegador sem abas acessiveis
-                            else if (read != TabReader.Retry)
-                                tabTitle = read;
-                            tabKey = appId;
-                            tabFetched = DateTime.UtcNow;
-                        }
-                        title = tabTitle;
+                        if (Settings.YouTube) title = MaskedTitle(appId, changed);
+                    }
+                    else if (mediaTitle != null && found == Source.YouTube && (site = CheckSite(appId, mediaTitle)) == Site.Other)
+                    {
+                        // Outro site tocando no navegador: ignora (privacidade) e pula essa midia nos proximos ciclos
+                        skipSession = appId + "|" + mediaEnd;
+                        skipUntil = DateTime.UtcNow + MediaRefresh;
+                        dirty = true;
+                    }
+                    else if (mediaTitle != null && ((site == Site.YouTube && !Settings.YouTube) || (site == Site.SpotifyWeb && !Settings.Spotify)))
+                    {
+                        // Fonte desligada no menu (YouTube ou Spotify): nao mostra
                     }
                     else if (mediaTitle != null)
                     {
+                        if (site == Site.SpotifyWeb) found = Source.Spotify; // Spotify Web: mesmo formato do Spotify desktop
                         title = mediaTitle;
                         artist = (found == Source.Spotify || Settings.ShowChannel) ? mediaArtist : null;
                         // Spotify: "Artista - Musica"; YouTube mantem "Titulo - Canal"

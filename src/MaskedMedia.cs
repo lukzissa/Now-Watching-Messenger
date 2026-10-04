@@ -80,6 +80,65 @@ namespace NowWatching
             return string.IsNullOrEmpty(found) ? null : found;
         }
 
+        // Mesmo titulo de video em uma aba do YouTube? (o Windows nao informa o site; isso confirma que e o YouTube)
+        public static bool SameTitle(string tabTitle, string mediaTitle)
+        {
+            if (string.IsNullOrEmpty(tabTitle) || string.IsNullOrEmpty(mediaTitle)) return false;
+            string a = tabTitle.Trim(), b = mediaTitle.Trim();
+            if (string.Equals(a, b, StringComparison.OrdinalIgnoreCase)) return true;
+            // Pequenas diferencas (texto extra no nome da aba): aceita conter o titulo, se ele nao for curto demais
+            return b.Length >= 10 && a.IndexOf(b, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        // Spotify Web tocando: a aba fica "Musica • Artista"
+        public static bool IsSpotifyWebName(string tabName, string mediaTitle)
+        {
+            return !string.IsNullOrEmpty(tabName) && !string.IsNullOrEmpty(mediaTitle)
+                && tabName.IndexOf(mediaTitle.Trim() + " \u2022 ", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        // Alguma janela do navegador tem uma aba ativa "<titulo> - YouTube"? (rapido, sem processo auxiliar)
+        public static bool YouTubeWindowHas(string processName, string mediaTitle)
+        {
+            return ActiveTabMatches(processName, mediaTitle, false);
+        }
+
+        // Alguma janela do navegador tem a aba ativa do Spotify Web tocando "<titulo> • <artista>"?
+        public static bool SpotifyWebWindowHas(string processName, string mediaTitle)
+        {
+            return ActiveTabMatches(processName, mediaTitle, true);
+        }
+
+        static bool ActiveTabMatches(string processName, string mediaTitle, bool spotify)
+        {
+            bool found = false;
+            var text = new StringBuilder(1024);
+            var cls = new StringBuilder(64);
+            EnumProc callback = (h, l) =>
+            {
+                if (!IsWindowVisible(h)) return true;
+                cls.Length = 0;
+                GetClassName(h, cls, cls.Capacity);
+                string c = cls.ToString();
+                if (c != "Chrome_WidgetWin_1" && c != "MozillaWindowClass") return true;
+                text.Length = 0;
+                GetWindowText(h, text, text.Capacity);
+                string t = text.ToString();
+                if (spotify)
+                {
+                    if (IsSpotifyWebName(t, mediaTitle) && BelongsTo(h, processName)) { found = true; return false; }
+                    return true;
+                }
+                int i = t.IndexOf(" - YouTube", StringComparison.Ordinal);
+                if (i <= 0 || !BelongsTo(h, processName)) return true;
+                if (SameTitle(NotificationCount.Replace(t.Substring(0, i), ""), mediaTitle)) { found = true; return false; }
+                return true;
+            };
+            EnumWindows(callback, IntPtr.Zero);
+            GC.KeepAlive(callback);
+            return found;
+        }
+
         static bool BelongsTo(IntPtr hWnd, string processName)
         {
             if (string.IsNullOrEmpty(processName)) return true;

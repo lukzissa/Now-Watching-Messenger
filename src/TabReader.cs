@@ -49,18 +49,23 @@ namespace NowWatching
             public List<string> Buttons = new List<string>();
         }
 
+        // Nomes das abas com "•" (Spotify Web tocando: "Musica • Artista"), usados so no modo lista
+        static List<string> bulletTabs = new List<string>();
+
         class Candidate
         {
             public string Title;
             public bool Audio;
         }
 
-        // App principal: roda o proprio exe com --read-tabs e le o titulo encontrado (ou null)
-        public static string ReadInChildProcess(string processName)
+        // App principal: roda o proprio exe com --read-tabs e le a resposta (ou null).
+        // list = false: titulo do video do YouTube que esta tocando audio (janela anonima)
+        // list = true: titulos de todas as abas do YouTube abertas, um por linha (confirmar que a midia e do YouTube)
+        public static string ReadInChildProcess(string processName, bool list = false)
         {
             try
             {
-                var psi = new ProcessStartInfo(Application.ExecutablePath, "--read-tabs " + processName)
+                var psi = new ProcessStartInfo(Application.ExecutablePath, "--read-tabs " + processName + (list ? " --list" : ""))
                 {
                     UseShellExecute = false,
                     CreateNoWindow = true,
@@ -79,18 +84,18 @@ namespace NowWatching
             catch { return null; }
         }
 
-        // Processo auxiliar: escreve o titulo do video do YouTube que esta tocando em aba de fundo
-        public static void Run(string processName)
+        // Processo auxiliar: escreve a resposta (ver ReadInChildProcess)
+        public static void Run(string processName, bool list)
         {
             string title = null;
-            try { title = Find(processName); } catch { }
+            try { title = Find(processName, list); } catch { }
             var stdout = Console.OpenStandardOutput();
             var bytes = Encoding.UTF8.GetBytes(title ?? "");
             stdout.Write(bytes, 0, bytes.Length);
             stdout.Flush();
         }
 
-        static string Find(string processName)
+        static string Find(string processName, bool list)
         {
             var windows = new List<KeyValuePair<IntPtr, string>>();
             var text = new StringBuilder(1024);
@@ -112,6 +117,7 @@ namespace NowWatching
             GC.KeepAlive(callback);
 
             var candidates = new List<Candidate>();
+            bulletTabs = new List<string>();
             bool anyTabs = false;
             foreach (var w in windows)
             {
@@ -123,11 +129,19 @@ namespace NowWatching
             }
             if (!anyTabs) return NoTabs;
 
-            // Prefere a aba que esta tocando audio (tem o botao de silenciar); ambiguidade = nao mostra nada
+            if (list)
+            {
+                var titles = new StringBuilder();
+                foreach (var c in candidates) titles.Append(c.Title).Append('\n');
+                foreach (var n in bulletTabs) titles.Append('~').Append(n).Append('\n');
+                return titles.ToString();
+            }
+
+            // So a aba do YouTube que esta tocando audio (tem o botao de silenciar, ativa ou nao).
+            // Ambiguidade ou nenhuma tocando = nao mostra nada (privacidade: nunca mostra um video pausado
+            // enquanto outro site toca)
             var audio = candidates.FindAll(c => c.Audio);
-            if (audio.Count == 1) return audio[0].Title;
-            if (audio.Count == 0 && candidates.Count == 1) return candidates[0].Title;
-            return null;
+            return audio.Count == 1 ? audio[0].Title : null;
         }
 
         static bool BelongsTo(IntPtr hWnd, string processName)
@@ -173,6 +187,8 @@ namespace NowWatching
                 prefix = "";
             }
             string closeName = CloseButtonName(tabs);
+            foreach (var tab in tabs)
+                if (tab.Name.IndexOf('\u2022') >= 0) bulletTabs.Add(tab.Name.Replace('\n', ' '));
 
             foreach (var tab in tabs)
             {
