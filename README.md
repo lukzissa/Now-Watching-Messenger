@@ -78,7 +78,7 @@ Mostra o que você está assistindo no **YouTube** ou ouvindo no **Spotify** no 
 
 **Problemas:** se o Messenger disser *"Este recurso requer o Windows Media Player 9 ou posterior"* ao ativar **"Mostrar o que estou ouvindo"**, instale o **Windows Media Player Legacy** uma vez (não é preciso usá-lo): 
 
-1. No **Terminal (Administrador)** cole: `Add-WindowsCapability -Online -Name "Media.WindowsMediaPlayer~~~~0.0.12.0"` 
+1. No **Terminal (Admin)**: `Add-WindowsCapability -Online -Name "Media.WindowsMediaPlayer~~~~0.0.12.0"` 
 
 Depois reinicie o PC e ative a opção de novo no Messenger. Essa exigência é do próprio Messenger, não do Now Watching.
 
