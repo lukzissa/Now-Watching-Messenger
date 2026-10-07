@@ -56,9 +56,7 @@ The executable is created as `NowWatchingMessenger.exe` in the repository root.
 **Messenger says "This feature requires Windows Media Player 9 or later"** when you turn on *Show what I'm listening to*:
 this check is made by Windows Live Messenger itself (not by Now Watching). It happens on Windows "N" editions or when the classic Windows Media Player was removed. Install it once (you don't need to use it):
 
-1. **Settings → System → Optional features → View features**, search **Windows Media Player Legacy** and install it (on Windows "N" editions, install **Media Feature Pack** first), or
-2. Press **Win + R**, type `optionalfeatures`, expand **Media Features** and check **Windows Media Player Legacy**, or
-3. In **Terminal (Admin)** run: `Add-WindowsCapability -Online -Name "Media.WindowsMediaPlayer~~~~0.0.12.0"`
+1. In **Terminal (Admin)** run: `Add-WindowsCapability -Online -Name "Media.WindowsMediaPlayer~~~~0.0.12.0"`
 
 Restart the PC, open Messenger and turn on *Show what I'm listening to* again.
 
@@ -78,9 +76,12 @@ Mostra o que você está assistindo no **YouTube** ou ouvindo no **Spotify** no 
 
 **Como usar:** baixe o `NowWatchingMessenger.exe` em [Releases](../../releases), execute e, no Messenger, ative **"Mostrar o que estou ouvindo"** no menu da mensagem pessoal. Clique com o botão direito no ícone da bandeja para escolher as fontes, abrir as Preferências ou sair.
 
-**Problemas:** se o Messenger disser *"Este recurso requer o Windows Media Player 9 ou posterior"* ao ativar **"Mostrar o que estou ouvindo"**, instale o **Windows Media Player Legacy** uma vez (não é preciso usá-lo): **Configurações → Sistema → Recursos opcionais → Exibir recursos** (em edições "N" do Windows, instale antes o **Media Feature Pack**), ou **Win + R** → `optionalfeatures` → **Recursos de Mídia**. Depois reinicie o PC e ative a opção de novo no Messenger. Essa exigência é do próprio Messenger, não do Now Watching.
+**Problemas:** se o Messenger disser *"Este recurso requer o Windows Media Player 9 ou posterior"* ao ativar **"Mostrar o que estou ouvindo"**, instale o **Windows Media Player Legacy** uma vez (não é preciso usá-lo): 
 
-**Compilar:** `powershell -ExecutionPolicy Bypass -File src\build.ps1`
+1. In **Terminal (Admin)** run: `Add-WindowsCapability -Online -Name "Media.WindowsMediaPlayer~~~~0.0.12.0"` 
+Depois reinicie o PC e ative a opção de novo no Messenger. Essa exigência é do próprio Messenger, não do Now Watching.
+
+
 
 ---
 
