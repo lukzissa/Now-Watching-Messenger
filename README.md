@@ -4,7 +4,7 @@ Show what you're watching on **YouTube** or listening to on **Spotify** in your 
 
 A modern rewrite of the classic *Now Watching* tray tool, which no longer runs on current Windows.
 <img width="500" height="500" alt="Now Watching Messenger" src="https://github.com/user-attachments/assets/26d6a0f4-4516-4af1-be45-71d1e5b48d9a" />
-<img width="539" height="360" alt="1" src="https://github.com/user-attachments/assets/b3892c3e-b89e-478b-8d19-3e361f4c2f42" />
+<img width="539" height="360" alt="NWM_novo" src="https://github.com/user-attachments/assets/e0c9e1ad-c9da-4e1f-a459-30fdfd1427f8" />
 
 
 [Português](#português) · [Donate](#donate)
