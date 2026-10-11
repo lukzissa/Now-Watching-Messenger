@@ -7,7 +7,7 @@ namespace NowWatching
 {
     class Strings
     {
-        public string LanguageName, NothingPlaying, ShowInMessenger, Sources, YouTube, Spotify,
+        public string LanguageName, NothingPlaying, ShowInMessenger, Sources, YouTube, YouTubeMusic, Spotify,
             PreferencesMenu, Exit, PreferencesTitle, Language, ShowChannel, Startup,
             Ok, Cancel, Freeware, DonateHint, DonateButton,
             UpdateTitle, UpdateText, UpdateButton, Downloading, UpdateFailed, OpenPage;
@@ -22,6 +22,7 @@ namespace NowWatching
                 ShowInMessenger = "Mostrar no Messenger",
                 Sources = "Fontes",
                 YouTube = "YouTube (navegador)",
+                YouTubeMusic = "YouTube Music (navegador)",
                 Spotify = "Spotify",
                 PreferencesMenu = "Preferências...",
                 Exit = "Sair",
@@ -46,6 +47,7 @@ namespace NowWatching
                 ShowInMessenger = "Mostrar en Messenger",
                 Sources = "Fuentes",
                 YouTube = "YouTube (navegador)",
+                YouTubeMusic = "YouTube Music (navegador)",
                 Spotify = "Spotify",
                 PreferencesMenu = "Preferencias...",
                 Exit = "Salir",
@@ -70,6 +72,7 @@ namespace NowWatching
                 ShowInMessenger = "Show in Messenger",
                 Sources = "Sources",
                 YouTube = "YouTube (browser)",
+                YouTubeMusic = "YouTube Music (browser)",
                 Spotify = "Spotify",
                 PreferencesMenu = "Preferences...",
                 Exit = "Exit",
@@ -94,6 +97,7 @@ namespace NowWatching
                 ShowInMessenger = "Показывать в Messenger",
                 Sources = "Источники",
                 YouTube = "YouTube (браузер)",
+                YouTubeMusic = "YouTube Music (браузер)",
                 Spotify = "Spotify",
                 PreferencesMenu = "Настройки...",
                 Exit = "Выход",

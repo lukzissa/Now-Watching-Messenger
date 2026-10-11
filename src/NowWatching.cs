@@ -16,15 +16,15 @@ using Windows.Media.Control;
 [assembly: System.Reflection.AssemblyProduct("Now Watching Messenger")]
 [assembly: System.Reflection.AssemblyCompany("Lucas Issa")]
 [assembly: System.Reflection.AssemblyCopyright("Freeware - Lucas Issa")]
-[assembly: System.Reflection.AssemblyVersion("1.4.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.4.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.5.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.5.0.0")]
 
 namespace NowWatching
 {
     static class Program
     {
         public const string Name = "Now Watching Messenger";
-        public const string Version = "1.4";
+        public const string Version = "1.5";
 
         [DllImport("user32.dll")]
         static extern bool SetProcessDPIAware();
@@ -87,6 +87,7 @@ namespace NowWatching
 
         public static volatile bool Enabled = GetBool("Enabled", true);
         public static volatile bool YouTube = GetBool("YouTube", true);
+        public static volatile bool YouTubeMusic = GetBool("YouTubeMusic", true);
         public static volatile bool Spotify = GetBool("Spotify", true);
         public static volatile bool ShowChannel = GetBool("ShowChannel", true);
         public static string Language = GetString("Language", Strings.DefaultLanguage());
@@ -115,6 +116,7 @@ namespace NowWatching
             {
                 k.SetValue("Enabled", Enabled ? 1 : 0, RegistryValueKind.DWord);
                 k.SetValue("YouTube", YouTube ? 1 : 0, RegistryValueKind.DWord);
+                k.SetValue("YouTubeMusic", YouTubeMusic ? 1 : 0, RegistryValueKind.DWord);
                 k.SetValue("Spotify", Spotify ? 1 : 0, RegistryValueKind.DWord);
                 k.SetValue("ShowChannel", ShowChannel ? 1 : 0, RegistryValueKind.DWord);
                 k.SetValue("Language", Language);
@@ -220,7 +222,7 @@ namespace NowWatching
         static readonly string[] Browsers = { "msedge", "chrome", "firefox", "308046b0af4a39cb", "opera", "brave", "vivaldi", "yandex" };
 
         readonly NotifyIcon tray;
-        readonly ToolStripMenuItem miNow, miEnabled, miSources, miYouTube, miSpotify, miPrefs, miExit;
+        readonly ToolStripMenuItem miNow, miEnabled, miSources, miYouTube, miYouTubeMusic, miSpotify, miPrefs, miExit;
         readonly System.Threading.Timer timer;
         readonly SynchronizationContext ui;
         GlobalSystemMediaTransportControlsSessionManager manager;
@@ -238,6 +240,7 @@ namespace NowWatching
             miEnabled = new ToolStripMenuItem("", null, (s, e) => { Settings.Enabled = !Settings.Enabled; Changed(); });
             miSources = new ToolStripMenuItem { Enabled = false };
             miYouTube = new ToolStripMenuItem("", null, (s, e) => { Settings.YouTube = !Settings.YouTube; Changed(); });
+            miYouTubeMusic = new ToolStripMenuItem("", null, (s, e) => { Settings.YouTubeMusic = !Settings.YouTubeMusic; Changed(); });
             miSpotify = new ToolStripMenuItem("", null, (s, e) => { Settings.Spotify = !Settings.Spotify; Changed(); });
             miPrefs = new ToolStripMenuItem("", null, (s, e) => ShowPreferences());
             miExit = new ToolStripMenuItem("", null, (s, e) => Quit());
@@ -249,7 +252,7 @@ namespace NowWatching
             menu.Items.AddRange(new ToolStripItem[] {
                 miNow, new ToolStripSeparator(),
                 miEnabled, new ToolStripSeparator(),
-                miSources, miYouTube, miSpotify, new ToolStripSeparator(),
+                miSources, miYouTube, miYouTubeMusic, miSpotify, new ToolStripSeparator(),
                 miPrefs, new ToolStripSeparator(),
                 miExit });
 
@@ -286,6 +289,8 @@ namespace NowWatching
             miSources.Text = t.Sources;
             miYouTube.Text = "    " + t.YouTube;
             miYouTube.Checked = Settings.YouTube;
+            miYouTubeMusic.Text = "    " + t.YouTubeMusic;
+            miYouTubeMusic.Checked = Settings.YouTubeMusic;
             miSpotify.Text = "    " + t.Spotify;
             miSpotify.Checked = Settings.Spotify;
             miPrefs.Text = t.PreferencesMenu;
@@ -305,17 +310,28 @@ namespace NowWatching
         string mediaKey, mediaTitle, mediaArtist;
         long mediaEnd;
         double mediaPos;
-        DateTime mediaFetched = DateTime.MinValue;
+        DateTime mediaFetched = DateTime.MinValue, mediaNewAt = DateTime.MinValue;
         static readonly TimeSpan MediaRefresh = TimeSpan.FromSeconds(30);
 
         // Titulo lido das abas (janela anonima com a aba do YouTube em segundo plano)
-        string tabKey, tabTitle;
+        string tabKey, tabTitle, tabIdent;
+
+        // Artista de cada musica do YouTube Music vista na janela anonima (lido da pagina quando a aba estava ativa)
+        readonly Dictionary<string, string> musicArtists = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        // Reproducao ja confirmada como YouTube/YouTube Music/Spotify Web neste navegador: com a janela minimizada o
+        // navegador nao mostra as abas, entao as proximas midias (ex.: proximo video do Mix) continuam valendo
+        // enquanto a reproducao nao parar
+        string contApp;
+        Site contSite;
         DateTime tabFetched = DateTime.MinValue, tabStarted = DateTime.MinValue;
         bool tabRetry;
 
         // Privacidade: no navegador so o YouTube e o Spotify Web contam. Resultado da ultima confirmacao (navegador + titulo)
-        enum Site { Other, YouTube, SpotifyWeb }
-        string siteKey;
+        // Pending: reproducao ja confirmada trocou de faixa, mas o nome da aba ainda nao mudou (confere de novo no proximo ciclo)
+        enum Site { Other, YouTube, YouTubeMusic, SpotifyWeb, Pending }
+        string siteKey, pendingKey;
+        DateTime pendingSince = DateTime.MinValue;
         Site siteResult;
         DateTime siteChecked = DateTime.MinValue;
         // Sessao de outro site (navegador + duracao) que o ciclo deve pular, para mostrar outra midia (ex.: Spotify)
@@ -323,29 +339,80 @@ namespace NowWatching
         DateTime skipUntil = DateTime.MinValue;
 
         // Descobre de que site e a midia do navegador (o Windows nao informa o site):
-        // - YouTube: aba "<mesmo titulo> - YouTube"; Spotify Web: aba "<titulo> • <artista>" tocando
+        // - YouTube: aba "<mesmo titulo> - YouTube"; YouTube Music: aba "<musica> | YouTube Music";
+        // - Spotify Web: aba "<musica> • <artista>" tocando
         // Primeiro pelo titulo das janelas (rapido); se a aba estiver em segundo plano, pelas abas (processo auxiliar).
         // Resultado guardado; outros sites sao conferidos de novo a cada 30 s.
         Site CheckSite(string appId, string title)
         {
             string key = appId + "|" + title;
-            if (key == siteKey && (siteResult != Site.Other || DateTime.UtcNow - siteChecked < MediaRefresh)) return siteResult;
+            if (key == siteKey && (siteResult != Site.Other || DateTime.UtcNow - siteChecked < OtherRecheck())) return siteResult;
             string proc = BrowserProcess(appId);
-            Site site = MaskedMedia.YouTubeWindowHas(proc, title) ? Site.YouTube
+            Site site = MaskedMedia.YouTubeMusicWindowHas(proc, title) ? Site.YouTubeMusic
+                : MaskedMedia.YouTubeWindowHas(proc, title) ? Site.YouTube
                 : MaskedMedia.SpotifyWebWindowHas(proc, title) ? Site.SpotifyWeb : Site.Other;
             if (site == Site.Other)
             {
                 string list = TabReader.ReadInChildProcess(proc, true);
                 if (list == TabReader.Retry) return Site.Other; // aba recem-aberta: confere de novo no proximo ciclo
+                // Janela minimizada (o navegador nao mostra as abas): mantem o site ja confirmado nesta reproducao
+                if (list == TabReader.NoTabs && contApp == appId && contSite != Site.Other)
+                {
+                    siteKey = key; siteResult = contSite; siteChecked = DateTime.UtcNow;
+                    return contSite;
+                }
                 if (list != null && list != TabReader.NoTabs)
-                    foreach (var line in list.Split('\n'))
-                    {
-                        if (line.StartsWith("~")) { if (MaskedMedia.IsSpotifyWebName(line, title)) { site = Site.SpotifyWeb; break; } }
-                        else if (MaskedMedia.SameTitle(line, title)) { site = Site.YouTube; break; }
-                    }
+                {
+                    var lines = list.Split('\n');
+                    // YouTube Music e Spotify Web primeiro (o titulo da musica tambem aparece na lista do YouTube)
+                    foreach (var line in lines)
+                        if (line.StartsWith("~"))
+                        {
+                            if (MaskedMedia.IsYouTubeMusicName(line, title)) { site = Site.YouTubeMusic; break; }
+                            if (MaskedMedia.IsSpotifyWebName(line, title)) { site = Site.SpotifyWeb; break; }
+                        }
+                    if (site == Site.Other)
+                        foreach (var line in lines)
+                            if (!line.StartsWith("~") && !line.StartsWith(TabReader.MusicHome) && MaskedMedia.SameTitle(line, title)) { site = Site.YouTube; break; }
+                    // A unica aba tocando e a do YouTube Music, mas o site ainda nao pos a musica no nome da aba (ex.: depois de um anuncio)
+                    if (site == Site.Other)
+                        foreach (var line in lines)
+                            if (line == TabReader.MusicHome || line.StartsWith(TabReader.MusicHome + "\t"))
+                            {
+                                // Com a musica da barra do player (aba visivel), ela tem que ser a mesma (um anuncio nao bate)
+                                string bar = line.Length > TabReader.MusicHome.Length ? line.Substring(TabReader.MusicHome.Length + 1) : null;
+                                // Sem como conferir (aba de fundo/janela minimizada): so se esta reproducao ja foi confirmada
+                                // como YouTube Music antes (senao poderia ser um anuncio)
+                                if (bar == null ? (contApp == appId && contSite == Site.YouTubeMusic) : (bar != "?" && MaskedMedia.SameTitle(bar, title)))
+                                    site = Site.YouTubeMusic;
+                                break;
+                            }
+                }
+            }
+            if (site == Site.Other && contApp == appId && contSite != Site.Other)
+            {
+                // Mesma reproducao (sem parar) com outra faixa: o navegador as vezes atualiza o nome da aba
+                // depois da midia; espera ate 10 s antes de tratar como outro site
+                if (pendingKey != key) { pendingKey = key; pendingSince = DateTime.UtcNow; }
+                if (DateTime.UtcNow - pendingSince < TimeSpan.FromSeconds(10)) return Site.Pending;
             }
             siteKey = key; siteResult = site; siteChecked = DateTime.UtcNow;
+            if (site != Site.Other) { contApp = appId; contSite = site; }
             return site;
+        }
+
+        // Videos no YouTube Music vem como "Artista - Musica (Official Video)": tira o artista repetido do titulo
+        static string WithoutArtist(string song, string artist)
+        {
+            string lead = artist.Trim() + " - ";
+            return song.StartsWith(lead, StringComparison.OrdinalIgnoreCase) && song.Length > lead.Length ? song.Substring(lead.Length) : song;
+        }
+
+        // "Outro site" e conferido de novo a cada 30 s; nos primeiros 40 s de uma midia nova, a cada 3 s
+        // (o navegador as vezes informa a midia antes de atualizar o nome da aba)
+        TimeSpan OtherRecheck()
+        {
+            return DateTime.UtcNow - mediaNewAt < TimeSpan.FromSeconds(40) ? TimeSpan.FromSeconds(3) : MediaRefresh;
         }
 
         // Nome do processo do navegador a partir do id da sessao de midia
@@ -370,11 +437,30 @@ namespace NowWatching
         string MaskedTitle(string appId, bool changed)
         {
             string proc = BrowserProcess(appId);
+            // Midia nova (navegador + duracao): recomeca a janela de tentativas rapidas
+            string ident = appId + "|" + mediaEnd;
+            if (ident != tabIdent) { tabIdent = ident; tabStarted = DateTime.UtcNow; tabRetry = true; }
             if (changed || tabKey != appId || tabRetry || DateTime.UtcNow - tabFetched > MediaRefresh)
             {
-                if (tabKey != appId) tabStarted = DateTime.UtcNow;
                 string read = TabReader.ReadInChildProcess(proc);
-                tabRetry = read == TabReader.Retry && DateTime.UtcNow - tabStarted < TimeSpan.FromSeconds(20);
+                // YouTube Music: as linhas seguintes sao a fila "A seguir" (musica<tab>artista); guarda os artistas para
+                // quando essas musicas tocarem com a aba em segundo plano
+                if (read != null && read.StartsWith(TabReader.MusicPrefix) && read.IndexOf('\n') > 0)
+                {
+                    var lines = read.Split('\n');
+                    read = lines[0];
+                    if (musicArtists.Count > 300) musicArtists.Clear();
+                    for (int i = 1; i < lines.Length; i++)
+                    {
+                        int tab = lines[i].IndexOf('\t');
+                        if (tab > 0 && tab < lines[i].Length - 1) musicArtists[lines[i].Substring(0, tab)] = lines[i].Substring(tab + 1);
+                    }
+                }
+                // Aba recem-aberta (leitura incerta, indicador de audio ainda nao apareceu, ou artista do YouTube Music
+                // ainda nao lido nem lembrado): tenta de novo no proximo ciclo (2 s) durante os primeiros 40 s da midia (o Opera demora mais); depois so a cada 30 s
+                bool musicNoArtist = read != null && read.StartsWith(TabReader.MusicPrefix) && read.IndexOf('\t', TabReader.MusicPrefix.Length) < 0
+                    && !musicArtists.ContainsKey(read.Substring(TabReader.MusicPrefix.Length));
+                tabRetry = (read == TabReader.Retry || read == null || musicNoArtist) && DateTime.UtcNow - tabStarted < TimeSpan.FromSeconds(40);
                 if (read == TabReader.NoTabs)
                     tabTitle = MaskedMedia.YouTubeTitleFromWindows(proc); // navegador sem abas acessiveis
                 else if (read != TabReader.Retry)
@@ -410,7 +496,7 @@ namespace NowWatching
                             string id = session.SourceAppUserModelId;
                             var src = Classify(id);
                             if (src == Source.None) continue;
-                            if (src == Source.YouTube && !Settings.YouTube && !Settings.Spotify) continue; // navegador: YouTube ou Spotify Web
+                            if (src == Source.YouTube && !Settings.YouTube && !Settings.YouTubeMusic && !Settings.Spotify) continue; // navegador: YouTube, YouTube Music ou Spotify Web
                             if (src == Source.Spotify && !Settings.Spotify) continue;
 
                             var info = session.GetPlaybackInfo();
@@ -437,6 +523,7 @@ namespace NowWatching
                 finally { Release(sessions); }
 
                 string title = null, artist = null;
+                bool ytMusic = false; // para o rotulo do menu ("YouTube Music: ...")
                 bool changed = false;
                 if (playing != null)
                 {
@@ -448,8 +535,9 @@ namespace NowWatching
                         if (tl != null) { end = tl.EndTime.Ticks; pos = tl.Position.TotalSeconds; }
                         Release(tl);
 
-                        changed = appId != mediaKey || end != mediaEnd || pos + 3 < mediaPos
-                            || DateTime.UtcNow - mediaFetched > MediaRefresh || mediaTitle == null;
+                        bool newMedia = appId != mediaKey || end != mediaEnd || pos + 3 < mediaPos;
+                        if (newMedia) mediaNewAt = DateTime.UtcNow;
+                        changed = newMedia || DateTime.UtcNow - mediaFetched > MediaRefresh || mediaTitle == null;
                         mediaPos = pos;
 
                         if (changed)
@@ -462,6 +550,11 @@ namespace NowWatching
                             mediaArtist = props == null ? null : props.Artist;
                             Release(props);
                             mediaKey = appId; mediaEnd = end; mediaFetched = DateTime.UtcNow;
+                            // Logo apos trocar de faixa o navegador as vezes informa a musica antes do artista:
+                            // le de novo em 2 s (so nos primeiros 15 s da faixa)
+                            if (mediaTitle != null && string.IsNullOrWhiteSpace(mediaArtist) && !MaskedMedia.IsPlaceholder(mediaTitle)
+                                && DateTime.UtcNow - mediaNewAt < TimeSpan.FromSeconds(15))
+                                mediaFetched = DateTime.UtcNow - MediaRefresh + TimeSpan.FromSeconds(2);
                         }
                     }
                     finally { Release(playing); }
@@ -470,35 +563,64 @@ namespace NowWatching
                     Site site = Site.Other;
                     if (mediaTitle != null && found == Source.YouTube && (placeholder || string.IsNullOrWhiteSpace(mediaArtist)))
                     {
-                        if (Settings.YouTube) title = MaskedTitle(appId, changed);
+                        // Cada site respeita a sua opcao no menu (YouTube ou YouTube Music)
+                        string masked = (Settings.YouTube || Settings.YouTubeMusic) ? MaskedTitle(appId, changed) : null;
+                        if (masked != null && masked.StartsWith(TabReader.MusicPrefix))
+                        {
+                            if (Settings.YouTubeMusic)
+                            {
+                                // "M<tab>musica[<tab>artista]": artista lido da pagina, ou lembrado de antes para a mesma musica
+                                var parts = masked.Substring(TabReader.MusicPrefix.Length).Split('\t');
+                                string song = parts[0], who = parts.Length > 1 ? parts[1] : null;
+                                if (!string.IsNullOrEmpty(who))
+                                {
+                                    if (musicArtists.Count > 300) musicArtists.Clear();
+                                    musicArtists[song] = who;
+                                }
+                                else musicArtists.TryGetValue(song, out who);
+                                if (string.IsNullOrEmpty(who)) title = song;
+                                else { title = who; artist = WithoutArtist(song, who); } // "Artista - Musica"
+                                ytMusic = true;
+                            }
+                        }
+                        else if (masked != null && Settings.YouTube) title = masked;
                     }
                     else if (mediaTitle != null && found == Source.YouTube && (site = CheckSite(appId, mediaTitle)) == Site.Other)
                     {
                         // Outro site tocando no navegador: ignora (privacidade) e pula essa midia nos proximos ciclos
                         skipSession = appId + "|" + mediaEnd;
-                        skipUntil = DateTime.UtcNow + MediaRefresh;
-                        dirty = true;
+                        skipUntil = DateTime.UtcNow + OtherRecheck();
+                        if (lastTitle != null) dirty = true; // tira o que estava aparecendo (sem reenviar "vazio" a cada ciclo)
                     }
-                    else if (mediaTitle != null && ((site == Site.YouTube && !Settings.YouTube) || (site == Site.SpotifyWeb && !Settings.Spotify)))
+                    else if (site == Site.Pending)
                     {
-                        // Fonte desligada no menu (YouTube ou Spotify): nao mostra
+                        // Faixa nova ainda nao confirmada pelo nome da aba: mantem o que estava mostrando
+                        title = lastTitle; artist = lastArtist;
+                        ytMusic = contSite == Site.YouTubeMusic;
+                    }
+                    else if (mediaTitle != null && ((site == Site.YouTube && !Settings.YouTube) || (site == Site.YouTubeMusic && !Settings.YouTubeMusic) || (site == Site.SpotifyWeb && !Settings.Spotify)))
+                    {
+                        // Fonte desligada no menu (YouTube, YouTube Music ou Spotify): nao mostra
                     }
                     else if (mediaTitle != null)
                     {
                         if (site == Site.SpotifyWeb) found = Source.Spotify; // Spotify Web: mesmo formato do Spotify desktop
+                        bool music = found == Source.Spotify || site == Site.YouTubeMusic;
+                        ytMusic = site == Site.YouTubeMusic;
                         title = mediaTitle;
-                        artist = (found == Source.Spotify || Settings.ShowChannel) ? mediaArtist : null;
-                        // Spotify: "Artista - Musica"; YouTube mantem "Titulo - Canal"
-                        if (found == Source.Spotify && !string.IsNullOrWhiteSpace(artist))
+                        artist = (music || Settings.ShowChannel) ? mediaArtist : null;
+                        // Spotify e YouTube Music: "Artista - Musica"; YouTube mantem "Titulo - Canal"
+                        if (music && !string.IsNullOrWhiteSpace(artist))
                         {
-                            string t = title; title = artist; artist = t;
+                            string t = title; title = artist; artist = WithoutArtist(t, title);
                         }
                     }
                 }
                 else
                 {
                     mediaKey = mediaTitle = mediaArtist = null;
-                    tabKey = tabTitle = null;
+                    tabKey = tabTitle = tabIdent = null; // midia parou: a proxima comeca do zero (tentativas rapidas de novo)
+                    contApp = null; // reproducao parou: o proximo site precisa ser confirmado de novo
                 }
 
                 string shownTitle = Settings.Enabled ? title : null;
@@ -514,7 +636,7 @@ namespace NowWatching
                 }
 
                 string text = title == null ? null
-                    : (found == Source.Spotify ? "Spotify: " : "YouTube: ")
+                    : (ytMusic ? "YouTube Music: " : found == Source.Spotify ? "Spotify: " : "YouTube: ")
                       + (string.IsNullOrEmpty(artist) ? title : title + " - " + artist);
                 if (text != label) ui.Post(_ => UpdateLabel(text), null);
             }

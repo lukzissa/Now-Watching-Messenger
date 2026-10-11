@@ -1,0 +1,140 @@
+﻿$1 - Audio dimainkan
+$1 - Audio diputar
+$1 - Audio ifa
+$1 - Audio ofspillen
+$1 - Audio oxudulur
+$1 - Audio playing
+$1 - Audio sedang dimainkan
+$1 - Audio wordt afgespeeld
+$1 - Audioa erreproduzitzen
+$1 - Awdjo qed jesigwixxi
+$1 - Fuaim ag seinm
+$1 - Kei te purei te ororongo
+$1 - Kucheza sauti
+$1 - Lecture audio
+$1 - Lecture du son
+$1 - May tumutugtog na audio
+$1 - Nagpe-play ng audio
+$1 - Pemutaran audio
+$1 - Phát âm thanh
+$1 - Po luhet audio
+$1 - Reprodución de audio
+$1 - Reprodução de áudio
+$1 - Riproduzione audio
+$1 - Riproduzione audio in corso
+$1 - Sain yn chwarae
+$1 - Ses çalınıyor
+$1 - Ses çalıyor
+$1 - Uyarina purichiy
+$1 - audio atskaņošana
+$1 - ljud spelas upp
+$1 - po luhet audioja
+$1 - reproduciranje zvuka
+$1 - se redă audio
+$1 - Áudio em reprodução
+$1 - Αναπαραγωγή ήχου
+$1 - Аудио репродукција
+$1 - Аудио тоглуулж байна
+$1 - Дыбыс ойнату
+$1 - Се пушта аудио
+$1 - Тавыш уйнатыла
+$1 - пуштено е аудио
+$1 - אודיו מופעל
+$1 - מנגן שמע
+$1 - آڈیو چل رہا ہے
+$1 - آڈیو چلا رہی ہے
+$1 - ئاۋاز قويۇش
+$1 - تشغيل الصوت
+$1 - صدا در حال پخش است
+$1 - پخش خودکار
+$1 - अडियो प्ले भइरहेको छ
+$1 - ऑडिओ प्ले करत आहे
+$1 - ऑडिओ प्ले करीत आहे
+$1 - ऑडियो चल रहा है
+$1 - ऑडियो चलाया जा रहा है
+$1 - ऑडियो वाजयता
+$1 - অডিঅ' প্লে হৈ আছে
+$1 - অডিও বাজছে
+$1 - অডিও বাজাচ্ছে
+$1 - ਔਡੀਓ ਪਲੇਇੰਗ
+$1 - ઑડિઓ ચલાવવું
+$1 - ઓડિયો વગાડવા
+$1 - ଅଡ଼ିଓ ପ୍ଲେଇଙ୍ଗ୍
+$1 - ஆடியோ இயக்கப்படுகிறது
+$1 - ஆடியோ இயங்குகிறது
+$1 - ఆడియో ప్లే చేయబడుతుంది
+$1 - ఆడియో ప్లే చేస్తోంది
+$1 - ಆಡಿಯೋ ಪ್ಲೇ ಆಗುತ್ತಿದೆ
+$1 - ಆಡಿಯೋ ಪ್ಲೇ ಆಗುತ್ತಿದೆ
+$1 - ഓഡിയോ പ്ലേ ചെയ്യുന്നു
+$1 - ශ්‍රව්‍ය ධාවනය
+$1 - การเล่นเสียง
+$1 - เล่นอัตโนมัติ
+$1 - ກຳລັງຫຼິ້ນສຽງ
+$1 - ສຽງກຳລັງຫຼິ້ນ
+$1 - အသံဖွင့်ခြင်း
+$1 - აუდიოს დაკვრა
+$1 - ኦዲዮ በመጫወት ላይ ነው
+$1 - ድምጽ በመጫወት ላይ
+$1 - ការចាក់អូឌីយ៉ូ
+$1 - កំពុង​ចាក់​សំឡេង
+$1 - オーディオを再生中
+$1 - オーディオ再生中です
+$1 - 正在播放音频
+$1 - 音訊播放
+$1 - 音訊播放中
+$1 - 音频正在播放
+$1 - 오디오 재생
+$1 – Audio playing
+$1 – Audio wird wiedergegeben
+$1 – Audiowiedergabe
+$1 – Fuaim ga chluich
+$1 – Hanglejátszás
+$1 – Lyd afspilles
+$1 – Oudio speel tans
+$1 – Prehráva sa zvuk
+$1 – Pušta se audio sadržaj
+$1 – Reproduciranje zvuka
+$1 – Zvuk se reprodukuje
+$1 – audio ijro etilmoqda
+$1 – der afspilles lyd
+$1 – hanglejátszás
+$1 – heli esitamine
+$1 – heli esitatakse
+$1 – hljóð í spilun
+$1 – leidžiamas garsas
+$1 – lyd spilles av
+$1 – lydavspilling
+$1 – odtwarzanie dźwięku
+$1 – prehráva sa zvuk
+$1 – přehrává se zvuk
+$1 – reproducira se audiodatoteka
+$1 – reprodukcija zvuka
+$1 – se redă sunet
+$1 – spelar upp ljud
+$1 – speler av lyd
+$1 – toistaa ääntä
+$1 – zvok se predvaja
+$1 – zvok se predvaja.
+$1 – áudio em reprodução
+$1 – ääntä toistetaan
+$1 – Пушта се аудио садржај
+$1 – аудиомазмұн ойнату
+$1 – възпроизвежда се звук
+$1 – възпроизвеждане на аудио
+$1 – відтворюється аудіо
+$1 – звук се репродукује
+$1 — odtwarzanie dźwięku
+$1 — უკრავს აუდიო
+$1: Reproducción de audio
+$1: audio wordt afgespeeld
+$1: reproducción de audio
+$1: reproducción de audio en curso
+$1: s'està reproduint l'àudio
+$1: s'està reproduint àudio
+$1: воспроизводится аудио
+$1: відтворення аудіо
+$1: звук воспроизводится
+$1 – Lecture audio
+$1 — audio atskaņošana
+„$1“ – garso įrašo paleidimas

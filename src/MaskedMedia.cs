@@ -69,11 +69,15 @@ namespace NowWatching
                 GetWindowText(h, text, text.Capacity);
                 string t = text.ToString();
                 int i = t.IndexOf(" - YouTube", StringComparison.Ordinal);
+                bool music = false;
+                if (i <= 0) { i = t.IndexOf(YouTubeMusicMark, StringComparison.Ordinal); music = true; } // YouTube Music
                 if (i <= 0) return true;
                 if (!BelongsTo(h, processName)) return true; // ignora YouTube aberto em outro navegador
 
                 found = NotificationCount.Replace(t.Substring(0, i), "").Trim();
-                return found.Length == 0; // continua procurando se o titulo ficou vazio
+                if (found.Length == 0) return true; // continua procurando se o titulo ficou vazio
+                if (music) found = TabReader.MusicPrefix + found;
+                return false;
             };
             EnumWindows(callback, IntPtr.Zero);
             GC.KeepAlive(callback);
@@ -97,19 +101,36 @@ namespace NowWatching
                 && tabName.IndexOf(mediaTitle.Trim() + " \u2022 ", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
+        // YouTube Music: a aba fica "Musica | YouTube Music"
+        public const string YouTubeMusicMark = " | YouTube Music";
+
+        public static bool IsYouTubeMusicName(string tabName, string mediaTitle)
+        {
+            return !string.IsNullOrEmpty(tabName) && !string.IsNullOrEmpty(mediaTitle)
+                && tabName.IndexOf(mediaTitle.Trim() + YouTubeMusicMark, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        enum Match { YouTube, SpotifyWeb, YouTubeMusic }
+
         // Alguma janela do navegador tem uma aba ativa "<titulo> - YouTube"? (rapido, sem processo auxiliar)
         public static bool YouTubeWindowHas(string processName, string mediaTitle)
         {
-            return ActiveTabMatches(processName, mediaTitle, false);
+            return ActiveTabMatches(processName, mediaTitle, Match.YouTube);
         }
 
         // Alguma janela do navegador tem a aba ativa do Spotify Web tocando "<titulo> • <artista>"?
         public static bool SpotifyWebWindowHas(string processName, string mediaTitle)
         {
-            return ActiveTabMatches(processName, mediaTitle, true);
+            return ActiveTabMatches(processName, mediaTitle, Match.SpotifyWeb);
         }
 
-        static bool ActiveTabMatches(string processName, string mediaTitle, bool spotify)
+        // Alguma janela do navegador tem a aba ativa do YouTube Music "<titulo> | YouTube Music"?
+        public static bool YouTubeMusicWindowHas(string processName, string mediaTitle)
+        {
+            return ActiveTabMatches(processName, mediaTitle, Match.YouTubeMusic);
+        }
+
+        static bool ActiveTabMatches(string processName, string mediaTitle, Match kind)
         {
             bool found = false;
             var text = new StringBuilder(1024);
@@ -124,9 +145,10 @@ namespace NowWatching
                 text.Length = 0;
                 GetWindowText(h, text, text.Capacity);
                 string t = text.ToString();
-                if (spotify)
+                if (kind != Match.YouTube)
                 {
-                    if (IsSpotifyWebName(t, mediaTitle) && BelongsTo(h, processName)) { found = true; return false; }
+                    bool hit = kind == Match.SpotifyWeb ? IsSpotifyWebName(t, mediaTitle) : IsYouTubeMusicName(t, mediaTitle);
+                    if (hit && BelongsTo(h, processName)) { found = true; return false; }
                     return true;
                 }
                 int i = t.IndexOf(" - YouTube", StringComparison.Ordinal);

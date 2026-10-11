@@ -11,11 +11,11 @@ A modern rewrite of the classic *Now Watching* tray tool, which no longer runs o
 
 ## Features
 
-- Shows the YouTube video title (optionally with the channel name) or the Spotify track as *Artist - Song*
-- Works with Edge, Chrome, Firefox, Opera, Brave and Vivaldi, even when the YouTube tab is in the background
-- Privacy: in the browser only YouTube and Spotify Web Player are shown; media from any other site is ignored
-- Enable or disable YouTube and Spotify independently
-- Also works in private windows in any browser (Edge InPrivate, Chrome/Brave incognito, Firefox private browsing), even with the YouTube tab in the background: since the browser hides the title from Windows media controls, it is read from the browser tabs through Windows accessibility (UI Automation), in a short-lived helper process
+- Shows the YouTube video title (optionally with the channel name), or the song as *Artist - Song* for Spotify, Spotify Web Player and YouTube Music
+- Works with Edge, Chrome, Firefox, Opera, Brave and Vivaldi, even when the YouTube tab is in the background or the browser window is minimized
+- Privacy: in the browser only YouTube, YouTube Music and Spotify Web Player are shown; media from any other site is ignored
+- Enable or disable YouTube, YouTube Music and Spotify independently
+- Also works in private windows in any browser (Edge InPrivate, Chrome/Brave/Vivaldi incognito, Opera and Firefox private browsing), even with the tab in the background or the window minimized: since the browser hides the title from Windows media controls, it is read from the browser tabs through Windows accessibility (UI Automation), in a short-lived helper process
 - Clears the status automatically when playback is paused or stopped
 - Re-sends the status if Messenger is restarted
 - Start with Windows option
@@ -62,9 +62,12 @@ Restart the PC, open Messenger and turn on *Show what I'm listening to* again.
 
 ## Known limitations
 
-- In the browser only YouTube and Spotify Web Player are recognized; other sites are ignored. Spotify Web Player in private windows is not shown
+- In the browser only YouTube, YouTube Music and Spotify Web Player are recognized; other sites are ignored. Spotify Web Player in private windows is not shown
+- YouTube Music in private windows: the artist is read from the player bar while the tab is active and the window is not minimized, together with the "Up next" queue, so the next songs keep showing *Artist - Song* in a background tab or minimized window; a song the app never saw with the tab active shows only the title
+- Ads are not shown when they can be recognized (YouTube Music tab visible); with the tab in the background an ad may appear for a few seconds
 - Only media that the browser or app exposes to Windows media controls is detected
 - In private windows the channel name is not available, and if more than one YouTube tab is playing at the same time nothing is shown
+- Right after a song or video starts, the status may take a few seconds to appear (some browsers, such as Opera, update the tab title later)
 
 ---
 
@@ -72,7 +75,7 @@ Restart the PC, open Messenger and turn on *Show what I'm listening to* again.
 
 Mostra o que você está assistindo no **YouTube** ou ouvindo no **Spotify** no status "O que estou ouvindo" do **Windows Live Messenger 2009**, no Windows 10 e 11.
 
-**Recursos:** título do vídeo (com ou sem o nome do canal), Spotify no formato *Artista - Música*, funciona no Edge, Chrome, Firefox e outros navegadores (até em abas de fundo, inclusive em janelas anônimas), YouTube e Spotify ativados separadamente, privacidade (no navegador só o YouTube e o Spotify Web aparecem; outros sites são ignorados), iniciar com o Windows, atualização automática com um clique e interface em português, inglês, espanhol e russo.
+**Recursos:** título do vídeo (com ou sem o nome do canal), Spotify, Spotify Web e YouTube Music no formato *Artista - Música*, funciona no Edge, Chrome, Firefox, Opera, Brave e Vivaldi (até em abas de fundo e com a janela minimizada, inclusive em janelas anônimas), YouTube, YouTube Music e Spotify ativados separadamente, privacidade (no navegador só o YouTube, o YouTube Music e o Spotify Web aparecem; outros sites são ignorados), iniciar com o Windows, atualização automática com um clique e interface em português, inglês, espanhol e russo.
 
 **Como usar:** baixe o `NowWatchingMessenger.exe` em [Releases](../../releases), execute e, no Messenger, ative **"Mostrar o que estou ouvindo"** no menu da mensagem pessoal. Clique com o botão direito no ícone da bandeja para escolher as fontes, abrir as Preferências ou sair.
 
