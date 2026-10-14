@@ -60,6 +60,8 @@ this check is made by Windows Live Messenger itself (not by Now Watching). It ha
 
 Restart the PC, open Messenger and turn on *Show what I'm listening to* again.
 
+**The Spotify app is not detected** (but YouTube and Spotify Web Player work): in Spotify, open **Settings → Display** and turn on **Show desktop overlay when using media keys**. With it off, Spotify does not share the current song with Windows media controls, so no app can read it.
+
 ## Known limitations
 
 - In the browser only YouTube, YouTube Music and Spotify Web Player are recognized; other sites are ignored. Spotify Web Player in private windows is not shown
@@ -84,6 +86,8 @@ Mostra o que você está assistindo no **YouTube** ou ouvindo no **Spotify** no 
 1. No **Terminal (Admin)**: `Add-WindowsCapability -Online -Name "Media.WindowsMediaPlayer~~~~0.0.12.0"` 
 
 Depois reinicie o PC e ative a opção de novo no Messenger. Essa exigência é do próprio Messenger, não do Now Watching.
+
+**O Spotify do Windows não é detectado** (mas o YouTube e o Spotify Web funcionam): no Spotify, abra **Configurações → Exibição** e ative **Mostrar sobreposição da área de trabalho ao usar as teclas de mídia**. Com essa opção desligada, o Spotify não informa a música ao Windows e nenhum programa consegue lê-la.
 
 
 
